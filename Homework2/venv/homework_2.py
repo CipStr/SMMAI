@@ -7,13 +7,13 @@ import skimage as sk
 
 def PCA(X, Y, k, digits, plot=True):
     mean = np.mean(X_train, axis=1)
-    X_train_centered = X - mean[:, None]
-    print(f"Shape of X_train_centered: {X_train_centered.shape}")
-    U, S, V = np.linalg.svd(X_train_centered, full_matrices=False)
+    X_centered = X - mean[:, None]
+    print(f"Shape of X_train_centered: {X_centered.shape}")
+    U, S, V = np.linalg.svd(X_centered, full_matrices=False)
     U_k = U[:, :k]
-    Z = U_k.T @ X_train
+    Z = U_k.T @ X
     print(f"Shape of Z_train: {Z.shape}")
-    plt.scatter(Z[0, :], Z[1, :], c=Y_train)
+    plt.scatter(Z[0, :], Z[1, :], c=Y)
     if plot:
         plt.savefig('pca_projection.png')
         plt.clf()
@@ -88,8 +88,8 @@ print(f"Shape of Y_train: {Y_train.shape}")
 print(f"Shape of X_test: {X_test.shape}")
 print(f"Shape of Y_test: {Y_test.shape}")
 
-U_k = PCA(X_train, Y_train, 2, digits)
-Q = LDA(X_train, Y_train, 2, digits)
+U_k = PCA(X, Y, 2, digits)
+Q = LDA(X, Y, 2, digits)
 
 for i in range(len(digits)):
     idx = np.where(Y_train == digits[i])
@@ -100,15 +100,12 @@ for i in range(len(digits)):
     avg_dist_lda = np.mean(dist_lda)
     print(f"Average distance from the centroid for cluster {digits[i]} (LDA): {avg_dist_lda}")
 
-U_k_test = PCA(X_test, Y_test, 2, digits, False)
-Q_test = LDA(X_test, Y_test, 2, digits, False)
-
 for i in range(len(digits)):
     idx = np.where(Y_test == digits[i])
-    dist_pca = np.linalg.norm(X_test[:, idx] - U_k_test.T @ np.mean(X_test[:, idx], axis=1), axis=0)
+    dist_pca = np.linalg.norm(X_test[:, idx] - U_k.T @ np.mean(X_test[:, idx], axis=1), axis=0)
     avg_dist_pca = np.mean(dist_pca)
     print(f"Average distance from the centroid for cluster {digits[i]} (PCA): {avg_dist_pca}")
-    dist_lda = np.linalg.norm(X_test[:, idx] - Q_test.T @ np.mean(X_test[:, idx], axis=1), axis=0)
+    dist_lda = np.linalg.norm(X_test[:, idx] - Q.T @ np.mean(X_test[:, idx], axis=1), axis=0)
     avg_dist_lda = np.mean(dist_lda)
     print(f"Average distance from the centroid for cluster {digits[i]} (LDA): {avg_dist_lda}")
 
@@ -116,13 +113,13 @@ centroids_pca = U_k.T @ np.mean(X_train, axis=1)
 centroids_lda = Q.T @ np.mean(X_train, axis=1)
 acc_pca = 0
 for i in range(X_test.shape[1]):
-    if classify(U_k_test.T @ X_test[:, i], centroids_pca) == Y_test[i]:
+    if classify(U_k.T @ X_test[:, i], centroids_pca) == Y_test[i]:
         acc_pca += 1
 acc_pca /= X_test.shape[1]
 print(f"Accuracy of the classification algorithm for PCA: {acc_pca}")
 acc_lda = 0
 for i in range(X_test.shape[1]):
-    if classify(Q_test.T @ X_test[:, i], centroids_lda) == Y_test[i]:
+    if classify(Q.T @ X_test[:, i], centroids_lda) == Y_test[i]:
         acc_lda += 1
 acc_lda /= X_test.shape[1]
 print(f"Accuracy of the classification algorithm for LDA: {acc_lda}")

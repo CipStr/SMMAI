@@ -9,19 +9,19 @@ def PCA(X, Y, k, digits, plot=True):
     # compute the mean of the dataset
     mean = np.mean(X_train, axis=1)
     # compute the centered dataset
-    X_train_centered = X - mean[:, None]
-    print(f"Shape of X_train_centered: {X_train_centered.shape}")
+    X_centered = X - mean[:, None]
+    print(f"Shape of X_train_centered: {X_centered.shape}")
     # Compute the centered version of as X_train = X_train - X_train_centered , where the subtraction between matrix and
     # vector is executed column-by-column;
     # Compute the SVD of X_train_centered
-    U, S, V = np.linalg.svd(X_train_centered, full_matrices=False)
+    U, S, V = np.linalg.svd(X_centered, full_matrices=False)
     # given k compute the truncated svd of X_train_centered
     U_k = U[:, :k]
     # project the dataset
-    Z = U_k.T @ X_train
+    Z = U_k.T @ X
     print(f"Shape of Z_train: {Z.shape}")
     # visualise the clusters
-    plt.scatter(Z[0, :], Z[1, :], c=Y_train)
+    plt.scatter(Z[0, :], Z[1, :], c=Y)
     if plot:
         # save the figure
         plt.savefig('pca_projection.png')
@@ -74,10 +74,9 @@ def LDA(X, Y, k, digits, plot=True):
     # save the figure
     if plot:
         plt.savefig('lda_projection.png')
-    # print position of centroids for each cluster
+    # get coordinates of centroids for each cluster and print them in regard to the projection
     for i in range(len(digits)):
-        print(f"Position of centroids for each cluster (LDA): {Q.T @ np.mean(X[:, Y == digits[i]], axis=1)} ")
-
+        print(f"Position of centroids for each cluster (LDA): {Q.T @ mean_class[:, i]}")
     return Q
 
 
@@ -100,7 +99,7 @@ Y = df.iloc[:, 0].values
 print("Shape of X", X.shape)
 print("Shape of Y", Y.shape)
 
-# for digits (0, 6, 9) extract the corresponding rows from X and Y
+# for digits (0,6,9) extract the corresponding rows from X and Y
 digits = [0, 6, 9]  # digits to consider
 # inline for loop used to filter the dataset
 X = X[:, np.isin(Y, digits)]
@@ -122,9 +121,9 @@ print(f"Shape of X_test: {X_test.shape}")
 print(f"Shape of Y_test: {Y_test.shape}")
 
 # PCA
-U_k = PCA(X_train, Y_train, 2, digits)
+U_k = PCA(X, Y, 2, digits)
 # LDA
-Q = LDA(X_train, Y_train, 2, digits)
+Q = LDA(X, Y, 2, digits)
 
 # for both pca and lda compute for each cluster the average distance from the centroid
 # compute the distance from the centroid for each cluster
@@ -140,39 +139,34 @@ for i in range(len(digits)):
     avg_dist_lda = np.mean(dist_lda)
     print(f"Average distance from the centroid for cluster {digits[i]} (LDA): {avg_dist_lda}")
 
-# PCA
-U_k_test = PCA(X_test, Y_test, 2, digits, False)
-# LDA
-Q_test = LDA(X_test, Y_test, 2, digits, False)
-
 for i in range(len(digits)):
     # get the indices of the cluster
     idx = np.where(Y_test == digits[i])
     # compute the distance from the centroid for each point
-    dist_pca = np.linalg.norm(X_test[:, idx] - U_k_test.T @ np.mean(X_test[:, idx], axis=1), axis=0)
+    dist_pca = np.linalg.norm(X_test[:, idx] - U_k.T @ np.mean(X_test[:, idx], axis=1), axis=0)
     # compute the average distance from the centroid
     avg_dist_pca = np.mean(dist_pca)
     print(f"Average distance from the centroid for cluster {digits[i]} (PCA): {avg_dist_pca}")
-    dist_lda = np.linalg.norm(X_test[:, idx] - Q_test.T @ np.mean(X_test[:, idx], axis=1), axis=0)
+    dist_lda = np.linalg.norm(X_test[:, idx] - Q.T @ np.mean(X_test[:, idx], axis=1), axis=0)
     avg_dist_lda = np.mean(dist_lda)
     print(f"Average distance from the centroid for cluster {digits[i]} (LDA): {avg_dist_lda}")
 
 
 # compute the accuracy of the classification algorithm for both PCA and LDA on the test set
 # compute the centroids for each cluster
-centroids_pca = U_k.T @ np.mean(X_train, axis=1)
-centroids_lda = Q.T @ np.mean(X_train, axis=1)
+centroids_pca = U_k.T @ np.mean(X_test, axis=1)
+centroids_lda = Q.T @ np.mean(X_test, axis=1)
 # compute the accuracy of the classification algorithm for PCA
 acc_pca = 0
 for i in range(X_test.shape[1]):
-    if classify(U_k_test.T @ X_test[:, i], centroids_pca) == Y_test[i]:
+    if classify(U_k.T @ X_test[:, i], centroids_pca) == Y_test[i]:
         acc_pca += 1
 acc_pca /= X_test.shape[1]
 print(f"Accuracy of the classification algorithm for PCA: {acc_pca}")
 # compute the accuracy of the classification algorithm for LDA
 acc_lda = 0
 for i in range(X_test.shape[1]):
-    if classify(Q_test.T @ X_test[:, i], centroids_lda) == Y_test[i]:
+    if classify(Q.T @ X_test[:, i], centroids_lda) == Y_test[i]:
         acc_lda += 1
 acc_lda /= X_test.shape[1]
 print(f"Accuracy of the classification algorithm for LDA: {acc_lda}")
