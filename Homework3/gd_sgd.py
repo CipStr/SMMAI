@@ -229,6 +229,11 @@ X_train = X[:, idx].astype(np.float64)
 Y_train = Y[idx].astype(np.float64)
 X_test = np.delete(X, idx, axis=1)
 Y_test = np.delete(Y, idx, axis=0)
+# normalize the data
+Y_test[Y_test == digit1] = -1
+Y_test[Y_test == digit2] = 1
+Y_train[Y_train == digit1] = -1
+Y_train[Y_train == digit2] = 1
 print(f"Shape of X_train: {X_train.shape}")
 print(f"Shape of Y_train: {Y_train.shape}")
 print(f"Shape of X_test: {X_test.shape}")
@@ -255,16 +260,17 @@ def gd(ell, grad_ell, w0, data, kmax, tol):
     f_val = []
     grads = []
     err = []
+    alpha = 0.01
     for k in range(kmax):
-        w.append(w[-1] - 1e-5 * grad_ell(w[-1], *data))
-        f_val.append(ell(w[-1], *data))
-        grads.append(grad_ell(w[-1], *data))
-        err.append(np.linalg.norm(grad_ell(w[-1], *data), 2))
+        w.append(w[-1] - alpha * grad_ell(w[-1], data[0], data[1]))
+        f_val.append(ell(w[-1], data[0], data[1]))
+        grads.append(grad_ell(w[-1], data[0], data[1]))
+        err.append(np.linalg.norm(grad_ell(w[-1], data[0], data[1]), 2))
         if err[-1] < tol:
             break
     return w, f_val, grads, err
 
 
-w_gd, f_val_gd, grads_gd, err_gd = gd(ell, grad_ell, w0, (Xhat_train, Y_train), 1000, 1e-5)
+w_gd, f_val_gd, grads_gd, err_gd = gd(ell, grad_ell, w0, (Xhat_train, Y_train), 100, 1e-5)
 Y_pred_gd = predict(w_gd[-1], Xhat_test)
 print(f"Accuracy: {np.sum(Y_pred_gd == Y_test) / len(Y_test)}")
