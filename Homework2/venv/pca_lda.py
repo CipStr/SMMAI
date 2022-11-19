@@ -76,15 +76,16 @@ def LDA(X, Y, k, digits, plot=True):
         plt.savefig('lda_projection.png')
     # get coordinates of centroids for each cluster and print them in regard to the projection
     for i in range(len(digits)):
-        print(f"Position of centroids for each cluster (LDA): {Q.T @ mean_class[:, i]}")
+        coord = Q.T @ mean_class[:, i]
+        print(f"Position of centroids for each cluster (LDA): {coord}")
     return Q
 
 
 # define a classification algorithm that given a new observation x computes the distance from the centroid of each
 # cluster and returns the label of the cluster with the smallest distance
 def classify(x, centroids):
-    # compute the distance from the centroid for each cluster
-    dist = np.linalg.norm(x - centroids, axis=0)
+    # compute the distance between the observation and the centroids
+    dist = np.linalg.norm(centroids - x[:, np.newaxis], axis=0)
     # return the label of the cluster with the smallest distance
     return np.argmin(dist)
 
@@ -153,10 +154,10 @@ for i in range(len(digits)):
 
 
 # compute the accuracy of the classification algorithm for both PCA and LDA on the test set
+# compute the accuracy of the classification algorithm for PCA
 # compute the centroids for each cluster
 centroids_pca = U_k.T @ np.mean(X_test, axis=1)
-centroids_lda = Q.T @ np.mean(X_test, axis=1)
-# compute the accuracy of the classification algorithm for PCA
+# compute the accuracy of the classification algorithm
 acc_pca = 0
 for i in range(X_test.shape[1]):
     if classify(U_k.T @ X_test[:, i], centroids_pca) == Y_test[i]:
@@ -164,6 +165,8 @@ for i in range(X_test.shape[1]):
 acc_pca /= X_test.shape[1]
 print(f"Accuracy of the classification algorithm for PCA: {acc_pca}")
 # compute the accuracy of the classification algorithm for LDA
+# compute the centroids for each cluster
+centroids_lda = Q.T @ np.mean(X_test, axis=1)
 acc_lda = 0
 for i in range(X_test.shape[1]):
     if classify(Q.T @ X_test[:, i], centroids_lda) == Y_test[i]:

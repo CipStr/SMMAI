@@ -57,7 +57,7 @@ def LDA(X, Y, k, digits, plot=True):
 
 
 def classify(x, centroids):
-    dist = np.linalg.norm(x - centroids, axis=0)
+    dist = np.linalg.norm(centroids - x[:, np.newaxis], axis=0)
     return np.argmin(dist)
 
 
@@ -109,8 +109,8 @@ for i in range(len(digits)):
     avg_dist_lda = np.mean(dist_lda)
     print(f"Average distance from the centroid for cluster {digits[i]} (LDA): {avg_dist_lda}")
 
-centroids_pca = U_k.T @ np.mean(X_train, axis=1)
-centroids_lda = Q.T @ np.mean(X_train, axis=1)
+centroids_pca = U_k.T @ np.mean(X_test, axis=1)
+centroids_lda = Q.T @ np.mean(X_test, axis=1)
 acc_pca = 0
 for i in range(X_test.shape[1]):
     if classify(U_k.T @ X_test[:, i], centroids_pca) == Y_test[i]:
